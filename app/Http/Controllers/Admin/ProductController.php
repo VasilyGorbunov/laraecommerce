@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductFormRequest;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Color;
 use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
@@ -24,7 +25,8 @@ class ProductController extends Controller
     {
         $categories = Category::all();
         $brands = Brand::all();
-        return view('admin.products.create', compact('categories', 'brands'));
+        $colors = Color::whereStatus(0)->get();
+        return view('admin.products.create', compact('categories', 'brands', 'colors'));
     }
 
     public function store(ProductFormRequest $request)
@@ -67,7 +69,17 @@ class ProductController extends Controller
             }
         }
 
-        return redirect('/admin/products')->with('message', 'PRoduct Added Sucessfully');
+        if($request->colors) {
+          foreach ($request->colors as $key => $color) {
+            $product->productColors()->create([
+              'product_id' => $product->id,
+              'color_id' => $color,
+              'quantity' => $request->colorquantity[$key] ?? 0,
+            ]);
+          }
+        }
+
+        return redirect('/admin/products')->with('message', 'Product Added Sucessfully');
     }
 
     public function edit(int $product_id)
